@@ -1412,7 +1412,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
         if (GetAsyncKeyState(VK_XBUTTON2)&0x8000) wp |= MK_XBUTTON2;
 
         // Forward scroll message
-        SendMessage(hwnd, wParam, wp, lp);
+        // SendMessage(hwnd, wParam, wp, lp);
+        PostMessage(hwnd, wParam, wp, lp);
 
         // Block original scroll event
         return 1;
@@ -2224,7 +2225,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
       // Store path to ini file at initial load so CallWndProc hooks can find it
       GetModuleFileName(NULL, inipath, ARRAY_SIZE(inipath));
       PathRemoveFileSpec(inipath);
-      wcscat(inipath, L"\\"APP_NAME".ini");
+      wcscat(inipath, L"\\" APP_NAME L".ini");
 
       // [General]
       GetPrivateProfileString(L"General", L"AutoFocus", L"0", txt, ARRAY_SIZE(txt), inipath);
