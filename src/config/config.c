@@ -50,7 +50,7 @@ void OpenConfig(int startpage) {
     { IDD_ABOUTPAGE,     AboutPageDialogProc },
   };
 
-  PROPSHEETPAGE psp[ARRAY_SIZE(pages)] = {};
+  PROPSHEETPAGE psp[ARRAY_SIZE(pages)] = {0};
   int i;
   for (i=0; i < ARRAY_SIZE(pages); i++) {
     psp[i].dwSize      = sizeof(PROPSHEETPAGE);
@@ -576,7 +576,7 @@ INT_PTR CALLBACK BlacklistPageDialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
       int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
       // Create window
-      WNDCLASSEX wnd = { sizeof(WNDCLASSEX), 0, CursorProc, 0, 0, g_hinst, NULL, NULL, (HBRUSH)(COLOR_WINDOW+1), NULL, APP_NAME"-find", NULL };
+      WNDCLASSEX wnd = { sizeof(WNDCLASSEX), 0, CursorProc, 0, 0, g_hinst, NULL, NULL, (HBRUSH)(COLOR_WINDOW+1), NULL, APP_NAME L"-find", NULL };
       wnd.hCursor = LoadImage(g_hinst, MAKEINTRESOURCE(IDI_FIND), IMAGE_CURSOR, 0, 0, LR_DEFAULTCOLOR);
       RegisterClassEx(&wnd);
       HWND findhwnd = CreateWindowEx(WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_LAYERED, wnd.lpszClassName, NULL, WS_POPUP, left, top, width, height, NULL, NULL, g_hinst, NULL);
