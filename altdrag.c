@@ -71,7 +71,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, char *szCmdLine, in
   // Get ini path
   GetModuleFileName(NULL, inipath, ARRAY_SIZE(inipath));
   PathRemoveFileSpec(inipath);
-  wcscat(inipath, L"\\"APP_NAME".ini");
+  wcscat(inipath, L"\\"APP_NAME L".ini");
   wchar_t txt[10];
 
   // Convert szCmdLine to argv and argc (max 10 arguments)
@@ -220,7 +220,7 @@ int HookSystem() {
     wcscat(path, L"\\hooks.dll");
     hinstDLL = LoadLibrary(path);
     if (hinstDLL == NULL) {
-      Error(L"LoadLibrary('hooks.dll')", L"This probably means that the file hooks.dll is missing. You can try reinstalling "APP_NAME".", GetLastError());
+      Error(L"LoadLibrary('hooks.dll')", L"This probably means that the file hooks.dll is missing. You can try reinstalling "APP_NAME L".", GetLastError());
       return 1;
     }
   }
@@ -231,7 +231,7 @@ int HookSystem() {
     // Get address to keyboard hook (beware name mangling)
     procaddr = (HOOKPROC) GetProcAddress(hinstDLL, "LowLevelKeyboardProc@12");
     if (procaddr == NULL) {
-      Error(L"GetProcAddress('LowLevelKeyboardProc@12')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME".", GetLastError());
+      Error(L"GetProcAddress('LowLevelKeyboardProc@12')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME L".", GetLastError());
       return 1;
     }
     // Set up the keyboard hook
@@ -249,7 +249,7 @@ int HookSystem() {
     // Get address to message hook (beware name mangling)
     procaddr = (HOOKPROC) GetProcAddress(hinstDLL, "CallWndProc@12");
     if (procaddr == NULL) {
-      Error(L"GetProcAddress('CallWndProc@12')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME".", GetLastError());
+      Error(L"GetProcAddress('CallWndProc@12')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME L".", GetLastError());
       return 1;
     }
     // Set up the message hook
@@ -325,7 +325,7 @@ int UnhookSystem() {
   // Tell dll file that we are unloading
   void (*Unload)() = (void*) GetProcAddress(hinstDLL, "Unload");
   if (Unload == NULL) {
-    Error(L"GetProcAddress('Unload')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME".", GetLastError());
+    Error(L"GetProcAddress('Unload')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME L".", GetLastError());
   }
   else {
     Unload();
@@ -334,7 +334,7 @@ int UnhookSystem() {
   // Unload library
   if (hinstDLL) {
     if (FreeLibrary(hinstDLL) == 0) {
-      Error(L"FreeLibrary()", L"Could not free hooks.dll. Try restarting "APP_NAME".", GetLastError());
+      Error(L"FreeLibrary()", L"Could not free hooks.dll. Try restarting "APP_NAME L".", GetLastError());
     }
     hinstDLL = NULL;
   }

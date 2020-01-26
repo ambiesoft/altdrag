@@ -50,7 +50,7 @@ void SetAutostart(int on, int hide, int elevate) {
     // Set autostart
     error = RegSetValueEx(key, APP_NAME, 0, REG_SZ, (LPBYTE)value, (wcslen(value)+1)*sizeof(value[0]));
     if (error != ERROR_SUCCESS) {
-      Error(L"RegSetValueEx('"APP_NAME"')", L"SetAutostart()", error);
+      Error(L"RegSetValueEx('"APP_NAME L"')", L"SetAutostart()", error);
       return;
     }
   }
@@ -58,7 +58,7 @@ void SetAutostart(int on, int hide, int elevate) {
     // Remove
     error = RegDeleteValue(key, APP_NAME);
     if (error != ERROR_SUCCESS) {
-      Error(L"RegDeleteValue('"APP_NAME"')", L"SetAutostart()", error);
+      Error(L"RegDeleteValue('"APP_NAME L"')", L"SetAutostart()", error);
       return;
     }
   }

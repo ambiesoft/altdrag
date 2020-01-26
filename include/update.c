@@ -48,7 +48,7 @@ DWORD WINAPI _CheckForUpdate(LPVOID arg) {
   wchar_t path[MAX_PATH], txt[10];
   GetModuleFileName(NULL, path, ARRAY_SIZE(path));
   PathRemoveFileSpec(path);
-  wcscat(path, L"\\"APP_NAME".ini");
+  wcscat(path, L"\\"APP_NAME L".ini");
   GetPrivateProfileString(L"Update", L"Beta", L"0", txt, ARRAY_SIZE(txt), path);
   int beta = _wtoi(txt);
 
@@ -69,7 +69,7 @@ DWORD WINAPI _CheckForUpdate(LPVOID arg) {
   }
 
   // Configure client
-  HINTERNET http = InternetOpen(APP_NAME"/"APP_VERSION, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+  HINTERNET http = InternetOpen(APP_NAME L"/"TEXT(APP_VERSION), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
   if (http == NULL) {
     if (verbose) {
       Error(L"InternetOpen()", L"Could not establish connection.\n\nPlease check for update manually on the website.", GetLastError());
