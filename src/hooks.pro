@@ -26,4 +26,15 @@ unix {
 SOURCES += \
     hooks.c
 
-LIBS += -lshlwapi -lcomctl32 -lpsapi -lole32
+win32-g++ {
+    message("win32-g++")
+    # QMAKE_CXXFLAGS +=-static -static-libgcc -static-libstdc++
+    QMAKE_LFLAGS +=-static -static-libgcc -static-libstdc++
+    LIBS += -lshlwapi -lcomctl32 -lpsapi -lole32
+}
+win32-msvc* {
+    message("win32-msvc*")
+    LIBS += user32.lib Advapi32.lib shlwapi.lib comctl32.lib psapi.lib Ole32.lib
+}
+
+

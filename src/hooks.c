@@ -47,14 +47,13 @@ enum button {BUTTON_NONE=0, BUTTON_LMB, BUTTON_MMB, BUTTON_RMB, BUTTON_MB4, BUTT
 enum resize {RESIZE_NONE=0, RESIZE_TOP, RESIZE_RIGHT, RESIZE_BOTTOM, RESIZE_LEFT, RESIZE_CENTER};
 enum cursor {HAND, SIZENWSE, SIZENESW, SIZENS, SIZEWE, SIZEALL};
 
+
 #if defined(__GNUC__)
     // Some variables must be shared so that CallWndProc hooks can access them
     #define shareattr __attribute__((section ("shared"), shared))
-    #define shareattrpre
 #else
     #pragma section("shared",shared)
-    #define shareattrpre __declspec(allocate("shared"))
-    #define shareattr
+    #define shareattr __declspec(allocate("shared"))
 #endif
 
 // Window database
@@ -109,12 +108,12 @@ struct {
   } mmi;
 } state;
 
-shareattrpre
+shareattr
 struct {
   short shift;
   short snap;
   enum action action;
-} sharedstate shareattr = {0, 0, ACTION_NONE};
+} sharedstate = {0, 0, ACTION_NONE};
 
 // Snap
 RECT *monitors = NULL;
@@ -127,7 +126,7 @@ HWND progman = NULL;
 
 // Settings
 #define MAXKEYS 10
-shareattrpre
+shareattr
 struct {
   int AutoFocus;
   int AutoSnap;
@@ -150,9 +149,9 @@ struct {
   struct {
     enum action LMB, MMB, RMB, MB4, MB5, Scroll;
   } Mouse;
-} sharedsettings shareattr;
-shareattrpre short sharedsettings_loaded shareattr = 0;
-shareattrpre wchar_t inipath[MAX_PATH] shareattr;
+} sharedsettings;
+ shareattr short sharedsettings_loaded = 0;
+ shareattr wchar_t inipath[MAX_PATH];
 
 // Blacklist (not shared since dynamically allocated)
 struct blacklistitem {
@@ -171,7 +170,7 @@ struct {
 } settings = {{NULL,0}, {NULL,0}, {NULL,0}};
 
 // Cursor data
-shareattrpre HWND cursorwnd shareattr = NULL;
+shareattr HWND cursorwnd = NULL;
 HCURSOR cursors[6];
 
 // Hook data
@@ -180,8 +179,8 @@ HHOOK mousehook = NULL;
 
 // Msghook data
 BOOL subclassed = FALSE;
-shareattrpre enum action msgaction shareattr = ACTION_NONE;
-shareattrpre short unload shareattr = 0;
+shareattr enum action msgaction = ACTION_NONE;
+shareattr short unload = 0;
 
 // Error()
 #ifdef DEBUG
@@ -730,7 +729,8 @@ void MouseMove() {
   }
 
   // Get new position for window
-  if (sharedstate.action == ACTION_MOVE) {
+  switch (sharedstate.action) {
+    case ACTION_MOVE: {
     posx = pt.x-state.offset.x;
     posy = pt.y-state.offset.y;
     wndwidth = wnd.right-wnd.left;
@@ -879,7 +879,8 @@ void MouseMove() {
       MoveSnap(&posx, &posy, wndwidth, wndheight);
     }
   }
-  else if (sharedstate.action == ACTION_RESIZE) {
+  break;
+  case ACTION_RESIZE: {
     // Clear restore flag
     state.wndentry->restore = 0;
 
@@ -899,30 +900,43 @@ void MouseMove() {
         GetClientRect(root, &rootwnd);
       }
 
-      if (state.resize.y == RESIZE_TOP) {
+      switch (state.resize.y) {
+        case RESIZE_TOP: {
         wndheight = max(min((wnd.bottom-pt.y+state.offset.y)-mdiclientpt.y, state.mmi.ptMaxTrackSize.y), state.mmi.ptMinTrackSize.y);
         posy = state.origin.bottom-wndheight;
       }
-      else if (state.resize.y == RESIZE_CENTER) {
+      break;
+      case RESIZE_CENTER: {
         posy = wnd.top-rootwnd.top-mdiclientpt.y;
         wndheight = wnd.bottom-wnd.top;
       }
-      else if (state.resize.y == RESIZE_BOTTOM) {
+      break;
+      case RESIZE_BOTTOM: {
         posy = wnd.top-rootwnd.top-mdiclientpt.y;
         wndheight = pt.y-posy+state.offset.y;
       }
-      if (state.resize.x == RESIZE_LEFT) {
+      break;
+    } // switch
+
+
+      switch (state.resize.x) {
+        case RESIZE_LEFT: {
         wndwidth = max(min((wnd.right-pt.x+state.offset.x)-mdiclientpt.x, state.mmi.ptMaxTrackSize.x), state.mmi.ptMinTrackSize.x);
         posx = state.origin.right-wndwidth;
       }
-      else if (state.resize.x == RESIZE_CENTER) {
+      break;
+      case RESIZE_CENTER: {
         posx = wnd.left-rootwnd.left-mdiclientpt.x;
         wndwidth = wnd.right-wnd.left;
       }
-      else if (state.resize.x == RESIZE_RIGHT) {
+      break;
+      case RESIZE_RIGHT: {
         posx = wnd.left-rootwnd.left-mdiclientpt.x;
         wndwidth = pt.x-posx+state.offset.x;
       }
+      break;
+      } // switch
+
 
       // Check if the window will snap anywhere
       if (sharedstate.snap) {
@@ -930,6 +944,8 @@ void MouseMove() {
       }
     }
   }
+  break;
+  } // switch
 
   MoveWindow(state.hwnd, posx, posy, wndwidth, wndheight, TRUE);
 }
@@ -1119,7 +1135,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
     int action = GetAction(button);
     POINT pt = msg->pt;
     // Handle mouse move and scroll
-    if (wParam == WM_MOUSEMOVE) {
+    switch(wParam) {
+    case WM_MOUSEMOVE: {
       // Store prevpt so we can check if the hook goes stale
       state.prevpt = pt;
       // Move the window
@@ -1140,10 +1157,12 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
         state.clicktime = 0;
       }
     }
-    else if (wParam == WM_MOUSEWHEEL || wParam == WM_MOUSEHWHEEL) {
+    break;
+    case WM_MOUSEWHEEL: case WM_MOUSEHWHEEL: {
       if (state.alt && !sharedstate.action && sharedsettings.Mouse.Scroll && !state.interrupted) {
         int delta = GET_WHEEL_DELTA_WPARAM(msg->mouseData);
-        if (sharedsettings.Mouse.Scroll == ACTION_ALTTAB) {
+        switch (sharedsettings.Mouse.Scroll) {
+          case ACTION_ALTTAB: {
           numhwnds = 0;
 
           if (sharedsettings.MDI) {
@@ -1233,7 +1252,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
           CloseLog(f);
           */
         }
-        else if (sharedsettings.Mouse.Scroll == ACTION_VOLUME) {
+        break;
+        case ACTION_VOLUME: {
           IMMDeviceEnumerator *pDevEnumerator = NULL;
           IMMDevice *pDev = NULL;
           IAudioEndpointVolume *pAudioEndpoint = NULL;
@@ -1258,10 +1278,10 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
           }
 
           // Function pointer so we only need one for-loop
-          typedef HRESULT WINAPI (*_VolumeStep)(IAudioEndpointVolume*, LPCGUID pguidEventContext);
-          _VolumeStep VolumeStep = (_VolumeStep)(pAudioEndpoint->lpVtbl->VolumeStepDown);
+          typedef HRESULT (*WINAPI FNVolumeStep)(IAudioEndpointVolume*, LPCGUID pguidEventContext);
+          FNVolumeStep VolumeStep = (FNVolumeStep)(pAudioEndpoint->lpVtbl->VolumeStepDown);
           if (delta > 0) {
-            VolumeStep = (_VolumeStep)(pAudioEndpoint->lpVtbl->VolumeStepUp);
+            VolumeStep = (FNVolumeStep)(pAudioEndpoint->lpVtbl->VolumeStepUp);
           }
 
           // Hold shift to make 5 steps
@@ -1276,7 +1296,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
             return CallNextHookEx(NULL, nCode, wParam, lParam);
           }
         }
-        else if (sharedsettings.Mouse.Scroll == ACTION_TRANSPARENCY) {
+        break;
+        case ACTION_TRANSPARENCY: {
           HWND hwnd = WindowFromPoint(pt);
           if (hwnd == NULL) {
             return CallNextHookEx(NULL, nCode, wParam, lParam);
@@ -1312,7 +1333,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
           }
           SetLayeredWindowAttributes(hwnd, 0, alpha, LWA_ALPHA);
         }
-        else if (sharedsettings.Mouse.Scroll == ACTION_LOWER) {
+        break;
+        case ACTION_LOWER: {
           HWND hwnd = WindowFromPoint(pt);
           if (hwnd == NULL) {
             return CallNextHookEx(NULL, nCode, wParam, lParam);
@@ -1358,6 +1380,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
             }
           }
         }
+        break;
+        } //switch
 
         // Block original scroll event
         state.blockaltup = 1;
@@ -1428,7 +1452,8 @@ __declspec(dllexport) LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wPara
         return 1;
       }
     }
-
+    break;
+}
     // Lower window if middle mouse button is used on the title bar
     // A twist from other programs is that this applies to the top border and corners and the buttons as well, which may be useful if the window has a small title bar (or none), e.g. web browsers with a lot of tabs open
     if (sharedsettings.LowerWithMMB && !state.alt && !sharedstate.action && buttonstate == STATE_DOWN && button == BUTTON_MMB) {
@@ -2445,3 +2470,4 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved) {
   }
   return TRUE;
 }
+

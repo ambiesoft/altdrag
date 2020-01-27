@@ -206,6 +206,18 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, char *szCmdLine, in
   return msg.wParam;
 }
 
+FARPROC MyGetProcAddress(HMODULE hinstDLL, LPCSTR lpProcName) {
+    FARPROC procaddr = GetProcAddress(hinstDLL, lpProcName);
+    if(procaddr==NULL) {
+        // CALLBACK causes to add underscore to the name
+        char name[1024];
+        name[0] = '_';
+        strcpy(&name[1],lpProcName);
+        procaddr = GetProcAddress(hinstDLL, name);
+    }
+    return procaddr;
+}
+
 int HookSystem() {
   if (keyhook && msghook) {
     // System already hooked
@@ -229,7 +241,7 @@ int HookSystem() {
   HOOKPROC procaddr;
   if (!keyhook) {
     // Get address to keyboard hook (beware name mangling)
-    procaddr = (HOOKPROC) GetProcAddress(hinstDLL, "LowLevelKeyboardProc@12");
+      procaddr = (HOOKPROC) MyGetProcAddress(hinstDLL, "LowLevelKeyboardProc@12");
     if (procaddr == NULL) {
       Error(L"GetProcAddress('LowLevelKeyboardProc@12')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME L".", GetLastError());
       return 1;
@@ -247,7 +259,7 @@ int HookSystem() {
   GetPrivateProfileString(L"Advanced", L"HookWindows", L"0", txt, ARRAY_SIZE(txt), inipath);
   if (!msghook && _wtoi(txt)) {
     // Get address to message hook (beware name mangling)
-    procaddr = (HOOKPROC) GetProcAddress(hinstDLL, "CallWndProc@12");
+    procaddr = (HOOKPROC) MyGetProcAddress(hinstDLL, "CallWndProc@12");
     if (procaddr == NULL) {
       Error(L"GetProcAddress('CallWndProc@12')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME L".", GetLastError());
       return 1;
@@ -323,7 +335,7 @@ int UnhookSystem() {
   }
 
   // Tell dll file that we are unloading
-  void (*Unload)() = (void*) GetProcAddress(hinstDLL, "Unload");
+  void (*Unload)() = (void*) MyGetProcAddress(hinstDLL, "Unload");
   if (Unload == NULL) {
     Error(L"GetProcAddress('Unload')", L"This probably means that the file hooks.dll is from an old version or corrupt. You can try reinstalling "APP_NAME L".", GetLastError());
   }

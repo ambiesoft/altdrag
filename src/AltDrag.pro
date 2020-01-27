@@ -9,7 +9,15 @@ INCLUDEPATH += .
 SOURCES += \
     altdrag.c
 
-LIBS += -lshlwapi -lwininet -lcomctl32
-
 win32:RC_FILE += include/altdrag.rc
-QMAKE_CXXFLAGS +=-mwindows
+
+win32-g++ {
+    message("win32-g++")
+    QMAKE_CXXFLAGS +=-mwindows
+    QMAKE_LFLAGS +=-static -static-libgcc -static-libstdc++
+}
+win32-msvc* {
+    message("win32-msvc*")
+}
+
+LIBS += -luser32 -lAdvapi32 -lShell32 -lshlwapi -lwininet -lcomctl32
