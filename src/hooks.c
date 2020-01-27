@@ -47,8 +47,15 @@ enum button {BUTTON_NONE=0, BUTTON_LMB, BUTTON_MMB, BUTTON_RMB, BUTTON_MB4, BUTT
 enum resize {RESIZE_NONE=0, RESIZE_TOP, RESIZE_RIGHT, RESIZE_BOTTOM, RESIZE_LEFT, RESIZE_CENTER};
 enum cursor {HAND, SIZENWSE, SIZENESW, SIZENS, SIZEWE, SIZEALL};
 
-// Some variables must be shared so that CallWndProc hooks can access them
-#define shareattr __attribute__((section ("shared"), shared))
+#if defined(__GNUC__)
+    // Some variables must be shared so that CallWndProc hooks can access them
+    #define shareattr __attribute__((section ("shared"), shared))
+    #define shareattrpre
+#else
+    #pragma section("shared",shared)
+    #define shareattrpre __declspec(allocate("shared"))
+    #define shareattr
+#endif
 
 // Window database
 #define NUMWNDDB 30
@@ -102,6 +109,7 @@ struct {
   } mmi;
 } state;
 
+shareattrpre
 struct {
   short shift;
   short snap;
@@ -119,6 +127,7 @@ HWND progman = NULL;
 
 // Settings
 #define MAXKEYS 10
+shareattrpre
 struct {
   int AutoFocus;
   int AutoSnap;
@@ -142,8 +151,8 @@ struct {
     enum action LMB, MMB, RMB, MB4, MB5, Scroll;
   } Mouse;
 } sharedsettings shareattr;
-short sharedsettings_loaded shareattr = 0;
-wchar_t inipath[MAX_PATH] shareattr;
+shareattrpre short sharedsettings_loaded shareattr = 0;
+shareattrpre wchar_t inipath[MAX_PATH] shareattr;
 
 // Blacklist (not shared since dynamically allocated)
 struct blacklistitem {
@@ -162,7 +171,7 @@ struct {
 } settings = {{NULL,0}, {NULL,0}, {NULL,0}};
 
 // Cursor data
-HWND cursorwnd shareattr = NULL;
+shareattrpre HWND cursorwnd shareattr = NULL;
 HCURSOR cursors[6];
 
 // Hook data
@@ -171,8 +180,8 @@ HHOOK mousehook = NULL;
 
 // Msghook data
 BOOL subclassed = FALSE;
-enum action msgaction shareattr = ACTION_NONE;
-short unload shareattr = 0;
+shareattrpre enum action msgaction shareattr = ACTION_NONE;
+shareattrpre short unload shareattr = 0;
 
 // Error()
 #ifdef DEBUG
